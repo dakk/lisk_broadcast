@@ -4,6 +4,7 @@
   "description": "broadcast a tx on lisk network (thanks for their precious help to fixcrypt, dakk and tobias)",
   "main": "lisk-multisignature_core-2.0.js",
   "scripts": {
+    "sign": "node signer.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
