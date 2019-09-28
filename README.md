@@ -15,3 +15,9 @@ npm install
 ```bash
 npm run sign
 ```
+
+or
+
+```bash
+node signer [pubkeyname]
+```

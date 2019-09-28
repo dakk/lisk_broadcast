@@ -35,11 +35,19 @@ const HEADERS = {
 };
 
 // **** PUT HERE THE PUBKEY OF THE MULTISIGNATURE ADDRESS ****
-//var pubkey = "15b50402822a1ecc3d8f17ccae407858078a21ca940cfa919ec42ed50c4e612f"; // my own 1
-//var pubkey = "c56ff6d8c3a4e826c2136e50a4ff1c0f51cc85ec7b05b8c1810c4070cce17a47"; // my own 2
-//var pubkey = "5fdd42a495e6798e7e8524da4c0fdeb290456d3fc25d602e969db6c48dda17ac"; // fulig
-const pubkey = "380b952cd92f11257b71cce73f51df5e0a258e54f60bb82bccd2ba8b4dff2ec9" // gdtpool
+const PUBKEYS = {
+    'gdtpool': '380b952cd92f11257b71cce73f51df5e0a258e54f60bb82bccd2ba8b4dff2ec9',
+    'fulig': '5fdd42a495e6798e7e8524da4c0fdeb290456d3fc25d602e969db6c48dda17ac'
+};
 
+let pubkey = PUBKEYS['gdtpool'];
+
+if (process.argv.length == 3 && process.argv[2] in PUBKEYS) {
+    console.log(`Setting pubkey to ${process.argv[2]}`);
+    pubkey = PUBKEYS[process.argv[2]];
+} else {
+    console.log(`Setting pubkey to gdtpool`);
+}
 
 // **** URL FOR TESTNET OR MAINNET ****
 let node = readlineSync.question('Type a number from 1 to 7 to choose a node and press enter (default 1) : ', {
