@@ -57,8 +57,8 @@ function getPendingMultisignature(endpoint) {
 
     let pending = data.data;
 
-    for (let m = 0; m < (data.meta.count); m += 100) {
-        res = request('GET', `${url}${endpoint}?offset=0&limit=${m}`);
+    for (let m = 100; m < (data.meta.count); m += 100) {
+        res = request('GET', `${url}${endpoint}?offset=${m}&limit=100`);
         data = JSON.parse(res.getBody('utf8'));
 
         pending = pending.concat(data.data);
