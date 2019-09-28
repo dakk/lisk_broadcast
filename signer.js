@@ -100,22 +100,23 @@ for (let i = 0; i < pending.length; i++) {
     // const json_obj = JSON.parse(data);
     const id = pending[i].id;
     const res = request('POST', `${url}/api/signatures/`, { json: transaction, headers: HEADERS });
+    const pr = `[${i}/${pending.length}] ${id} `;
 
     try {
         const reply = JSON.stringify(res.getBody('utf8'));
 
         if (reply.includes("true"))
-            console.log(id + " Signed");
+            console.log(pr + "Signed");
         else if (reply.includes("transaction not found"))
-            console.log(id + " Transaction not found");
+            console.log(pr + "Transaction not found");
         else if (reply.includes("already present in transaction"))
-            console.log(id + " Signature already exists");
+            console.log(pr + "Signature already exists");
         else if (reply.includes("is not a member for account")) 
-            console.log(id + " Failed to verify signature");
+            console.log(pr + "Failed to verify signature");
     } catch (err) {
         if (res.statusCode == 200)
-            console.log(id + " Signed");
+            console.log(pr + "Signed");
         else if (res.statusCode == 409) 
-            console.log(id + " Failed");
+            console.log(pr + "Failed");
     }
 }
