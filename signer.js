@@ -54,7 +54,7 @@ let node = readlineSync.question('Type a number from 1 to 7 to choose a node and
     hideEchoBack: false
 });
 
-const url = (node > 0 && node < 8) ? NODES[node - 1] : url = NODES[0];
+const url = (node > 0 && node < 8) ? NODES[node - 1] : NODES[0];
 
 function getPendingMultisignature(endpoint) {
     res = request('GET', `${url}${endpoint}?offset=0&limit=100`);
@@ -96,8 +96,6 @@ for (let i = 0; i < pending.length; i++) {
         continue;
 
     const transaction = lisk.transaction.createSignatureObject((pending[i]), seed);
-    // const data = JSON.stringify(transaction);
-    // const json_obj = JSON.parse(data);
     const id = pending[i].id;
     const res = request('POST', `${url}/api/signatures/`, { json: transaction, headers: HEADERS });
     const pr = `[${i}/${pending.length}] ${id} `;
