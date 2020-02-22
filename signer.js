@@ -42,22 +42,17 @@ const PUBKEYS = {
 
 let pubkey = PUBKEYS['gdtpool'];
 
-if (process.argv.length == 3 && process.argv[2] in PUBKEYS) {
+if (process.argv.length >= 3 && process.argv[2] in PUBKEYS) {
     console.log(`Setting pubkey to ${process.argv[2]}`);
     pubkey = PUBKEYS[process.argv[2]];
 } else {
     console.log(`Setting pubkey to gdtpool`);
 }
 
-// **** URL FOR TESTNET OR MAINNET ****
-let node = readlineSync.question('Type a number from 1 to 7 to choose a node and press enter (default 1) : ', {
-    hideEchoBack: false
-});
 
-const url = (node > 0 && node < 8) ? NODES[node - 1] : NODES[0];
 
-function getPendingMultisignature(endpoint) {
-    res = request('GET', `${url}${endpoint}?offset=0&limit=100`);
+function getPendingMultisignature(node, endpoint) {
+    res = request('GET', `${node}${endpoint}?offset=0&limit=100`);
     data = JSON.parse(res.getBody('utf8'));
 
     if (data.meta.count <= 100)
@@ -66,7 +61,7 @@ function getPendingMultisignature(endpoint) {
     let pending = data.data;
 
     for (let m = 100; m < (data.meta.count); m += 100) {
-        res = request('GET', `${url}${endpoint}?offset=${m}&limit=100`);
+        res = request('GET', `${node}${endpoint}?offset=${m}&limit=100`);
         data = JSON.parse(res.getBody('utf8'));
 
         pending = pending.concat(data.data);
@@ -75,46 +70,83 @@ function getPendingMultisignature(endpoint) {
     return pending;
 }
 
-let pending = [];
+function getAllPendingMultisignature(node) {
+    let pending = [];
 
-for (let e of MS_ENDPOINTS) 
-    pending = pending.concat(getPendingMultisignature(e));
+    for (let e of MS_ENDPOINTS) 
+        pending = pending.concat(getPendingMultisignature(node, e));
 
-if (pending.length == 0) {
-    console.log("No tx to sign, belonging to the given pubkey - exiting")
-    process.exit(0);
+    return pending;
 }
 
-console.log(pending.length + " tx to be signed, belonging to the given pubkey ");
-const seed = readlineSync.question('What is your seed? ', { hideEchoBack: true });
-
-
-for (let i = 0; i < pending.length; i++) {
-    const userStr = JSON.stringify(pending[i]);
-
-    if (!(userStr).includes(pubkey))
-        continue;
-
-    const transaction = lisk.transaction.createSignatureObject((pending[i]), seed);
-    const id = pending[i].id;
-    const res = request('POST', `${url}/api/signatures/`, { json: transaction, headers: HEADERS });
-    const pr = `[${i}/${pending.length}] ${id} `;
-
-    try {
-        const reply = JSON.stringify(res.getBody('utf8'));
-
-        if (reply.includes("true"))
-            console.log(pr + "Signed");
-        else if (reply.includes("transaction not found"))
-            console.log(pr + "Transaction not found");
-        else if (reply.includes("already present in transaction"))
-            console.log(pr + "Signature already exists");
-        else if (reply.includes("is not a member for account")) 
-            console.log(pr + "Failed to verify signature");
-    } catch (err) {
-        if (res.statusCode == 200)
-            console.log(pr + "Signed");
-        else if (res.statusCode == 409) 
-            console.log(pr + "Failed");
+function bulkSign(node, seed, pending) {
+    let signed = 0;
+    for (let i = 0; i < pending.length; i++) {
+        const userStr = JSON.stringify(pending[i]);
+    
+        if (!(userStr).includes(pubkey))
+            continue;
+    
+        const transaction = lisk.transaction.createSignatureObject((pending[i]), seed);
+        const id = pending[i].id;
+        const res = request('POST', `${node}/api/signatures/`, { json: transaction, headers: HEADERS });
+        const pr = `[${i}/${pending.length}] ${id} `;
+    
+        try {
+            const reply = JSON.stringify(res.getBody('utf8'));
+    
+            if (reply.includes("true")) {
+                console.log(pr + "Signed");
+                signed += 1;
+            }
+            else if (reply.includes("transaction not found"))
+                console.log(pr + "Transaction not found");
+            else if (reply.includes("already present in transaction"))
+                console.log(pr + "Signature already exists");
+            else if (reply.includes("is not a member for account")) 
+                console.log(pr + "Failed to verify signature");
+        } catch (err) {
+            if (res.statusCode == 200)
+                console.log(pr + "Signed");
+            else if (res.statusCode == 409) 
+                console.log(pr + "Failed");
+        }
     }
+
+    console.log(`Signed ${signed} of ${pending.length} total`);
+}
+
+function loopStep(seed) {
+    const url = NODES[Math.floor(Math.random() * NODES.length)];
+    const pending = getAllPendingMultisignature(url);
+
+    if (pending.length == 0) {
+        console.log("No tx to sign, belonging to the given pubkey")
+    } else {
+        console.log(pending.length + " tx to be signed, belonging to the given pubkey ");
+        bulkSign(url, seed, pending);
+    }
+    setTimeout(() => loopStep(seed), 120000);    
+}
+
+
+if (process.argv.length >= 4 && process.argv[3] == 'loop') {
+    const seed = readlineSync.question('What is your seed? ', { hideEchoBack: true });
+    loopStep(seed);
+} else {
+    let node = readlineSync.question('Type a number from 1 to 7 to choose a node and press enter (default 1) : ', {
+        hideEchoBack: false
+    });
+
+    const url = (node > 0 && node < 8) ? NODES[node - 1] : NODES[0];
+    const pending = getAllPendingMultisignature(url);
+
+    if (pending.length == 0) {
+        console.log("No tx to sign, belonging to the given pubkey - exiting")
+        process.exit(0);
+    }
+
+    console.log(pending.length + " tx to be signed, belonging to the given pubkey ");
+    const seed = readlineSync.question('What is your seed? ', { hideEchoBack: true });
+    bulkSign(url, seed, pending);
 }

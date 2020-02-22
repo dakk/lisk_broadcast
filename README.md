@@ -21,3 +21,9 @@ or
 ```bash
 node signer [pubkeyname]
 ```
+
+You can also loop forever, waiting for transactions to sign:
+
+```bash
+node signer [pubkeyname] loop
+```
