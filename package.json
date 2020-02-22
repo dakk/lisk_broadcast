@@ -5,6 +5,7 @@
   "main": "lisk-multisignature_core-2.0.js",
   "scripts": {
     "sign": "node signer.js",
+    "loop-gdt": "node signer.js gdt loop",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

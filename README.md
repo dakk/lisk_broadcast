@@ -27,3 +27,9 @@ You can also loop forever, waiting for transactions to sign:
 ```bash
 node signer [pubkeyname] loop
 ```
+
+or
+
+```bash
+npm run loop-gdt
+```
